@@ -4,6 +4,7 @@ import { useState } from "react"
 import useSWR from "swr"
 import { RecommendationList } from "@/components/stock-recommendations/RecommendationList"
 import { StockDetailModal } from "@/components/stock-recommendations/StockDetailModal"
+import { TrendRanking } from "@/components/stock-recommendations/TrendRanking"
 import { useRealtimePrice } from "@/hooks/useRealtimePrice"
 import type { Recommendation } from "@/types/stock"
 
@@ -22,12 +23,19 @@ export default function Page() {
 
   return (
     <main className="min-h-screen p-4 md:p-8 max-w-5xl mx-auto">
-      <RecommendationList
-        recommendations={data?.data ?? []}
-        isLoading={isLoading}
-        prices={prices}
-        onSelect={setSelected}
-      />
+      <div className="flex flex-col md:flex-row gap-6">
+        <div className="flex-1 min-w-0">
+          <RecommendationList
+            recommendations={data?.data ?? []}
+            isLoading={isLoading}
+            prices={prices}
+            onSelect={setSelected}
+          />
+        </div>
+        <div className="w-full md:w-64 shrink-0">
+          <TrendRanking />
+        </div>
+      </div>
       <StockDetailModal selected={selected} onClose={() => setSelected(null)} />
     </main>
   )
