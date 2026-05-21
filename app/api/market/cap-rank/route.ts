@@ -28,7 +28,7 @@ export async function GET() {
         "&FID_COND_SCR_DIV_CODE=20174" +
         "&FID_INPUT_ISCD=0000" +
         "&FID_DIV_CLS_CODE=0" +
-        "&FID_BLNG_CLS_CODE=0" +
+        "&FID_BLNG_CLS_CODE=1" +  // 보통주만 (우선주 제외)
         "&FID_TRGT_CLS_CODE=111111111" +
         "&FID_TRGT_EXLS_CLS_CODE=000000" +
         "&FID_INPUT_PRICE_1=0" +
