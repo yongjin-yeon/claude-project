@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react"
 
+const POLL_INTERVAL = 5_000 // 5초
+
 export function useRealtimePrice(codes: string[]): Map<string, number> {
   const [prices, setPrices] = useState<Map<string, number>>(new Map())
   const codesKey = useMemo(() => codes.slice().sort().join(","), [codes])
@@ -9,19 +11,22 @@ export function useRealtimePrice(codes: string[]): Map<string, number> {
   useEffect(() => {
     if (codesKey === "") return
 
-    const url = `/api/price-stream?codes=${encodeURIComponent(codesKey)}`
-    const es = new EventSource(url)
-
-    es.onmessage = (e) => {
+    const fetchPrices = async () => {
       try {
-        const { code, price } = JSON.parse(e.data) as { code: string; price: number }
-        setPrices((prev) => new Map(prev).set(code, price))
+        const res = await fetch(`/api/prices?codes=${encodeURIComponent(codesKey)}`)
+        if (!res.ok) return
+        const json = (await res.json()) as { data: Record<string, number> }
+        if (json.data && typeof json.data === "object") {
+          setPrices(new Map(Object.entries(json.data)))
+        }
       } catch {
-        // ignore malformed messages
+        // 네트워크 오류 시 무시 — 이전 prices 유지
       }
     }
 
-    return () => es.close()
+    fetchPrices()
+    const timer = setInterval(fetchPrices, POLL_INTERVAL)
+    return () => clearInterval(timer)
   }, [codesKey])
 
   return prices
