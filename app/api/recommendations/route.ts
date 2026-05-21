@@ -1,5 +1,5 @@
-import { getDb, insertRecommendation, getRecommendations } from "@/lib/db"
 import { scrapeHankyung, mapOpinion } from "./scraper"
+import type { Recommendation } from "@/types/stock"
 
 function todayKST(): string {
   return new Date()
@@ -16,36 +16,47 @@ function parseTargetPrice(raw: string): number | null {
   return Number.isFinite(n) && n > 0 ? n : null
 }
 
+function toRecommendations(reports: Awaited<ReturnType<typeof scrapeHankyung>>): Recommendation[] {
+  const now = new Date().toISOString()
+  const result: Recommendation[] = []
+  for (const r of reports) {
+    const target_price = parseTargetPrice(r.TARGET_STOCK_PRICES)
+    if (!target_price) continue
+    result.push({
+      id: r.REPORT_IDX,
+      stock_code: r.BUSINESS_CODE,
+      stock_name: r.BUSINESS_NAME,
+      firm: r.OFFICE_NAME,
+      opinion: mapOpinion(r.GRADE_VALUE),
+      target_price,
+      scraped_at: now,
+      report_date: r.REPORT_DATE,
+    })
+  }
+  return result
+}
+
 export async function GET() {
-  const db = getDb()
   const today = todayKST()
 
-  let rows = getRecommendations(db, today)
+  try {
+    const reports = await scrapeHankyung()
+    let rows = toRecommendations(reports).filter((r) => r.report_date === today)
 
-  if (rows.length === 0) {
-    try {
-      const reports = await scrapeHankyung()
-      const now = new Date().toISOString()
-      for (const r of reports) {
-        const target_price = parseTargetPrice(r.TARGET_STOCK_PRICES)
-        if (target_price == null) continue
-        insertRecommendation(db, {
-          stock_code: r.BUSINESS_CODE,
-          stock_name: r.BUSINESS_NAME,
-          firm: r.OFFICE_NAME,
-          opinion: mapOpinion(r.GRADE_VALUE),
-          target_price,
-          scraped_at: now,
-          report_date: r.REPORT_DATE,
-        })
+    // 오늘 데이터가 없으면 (장 개장 전 등) 가장 최근 날짜 데이터로 폴백
+    if (rows.length === 0) {
+      const all = toRecommendations(reports)
+      if (all.length > 0) {
+        const latest = all[0].report_date
+        rows = all.filter((r) => r.report_date === latest)
       }
-      rows = getRecommendations(db, today)
-    } catch (e) {
-      console.error("[scrape] auto-scrape on GET failed:", e)
     }
-  }
 
-  return Response.json({ data: rows })
+    return Response.json({ data: rows })
+  } catch (e) {
+    console.error("[scrape] GET failed:", e)
+    return Response.json({ data: [] })
+  }
 }
 
 export async function POST(request: Request) {
@@ -57,28 +68,12 @@ export async function POST(request: Request) {
     }
   }
 
-  const db = getDb()
   try {
     const reports = await scrapeHankyung()
-    const now = new Date().toISOString()
-    let inserted = 0
-    for (const r of reports) {
-      const target_price = parseTargetPrice(r.TARGET_STOCK_PRICES)
-      if (target_price == null) continue
-      insertRecommendation(db, {
-        stock_code: r.BUSINESS_CODE,
-        stock_name: r.BUSINESS_NAME,
-        firm: r.OFFICE_NAME,
-        opinion: mapOpinion(r.GRADE_VALUE),
-        target_price,
-        scraped_at: now,
-        report_date: r.REPORT_DATE,
-      })
-      inserted++
-    }
-    return Response.json({ ok: true, inserted })
+    const rows = toRecommendations(reports)
+    return Response.json({ ok: true, total: rows.length })
   } catch (e) {
-    console.error("[scrape] POST scrape failed:", e)
+    console.error("[scrape] POST failed:", e)
     return Response.json({ ok: false, error: String(e) }, { status: 500 })
   }
 }
