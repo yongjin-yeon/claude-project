@@ -2,14 +2,23 @@
 
 import { useState } from "react"
 import useSWR from "swr"
-import type { TrendEntry } from "@/types/stock"
+import type { TrendEntry, VolumeRankEntry } from "@/types/stock"
+import { useRealtimePrice } from "@/hooks/useRealtimePrice"
 
 const PERIODS = [5, 20, 60] as const
 type Period = (typeof PERIODS)[number]
+type Tab = "trend" | "volume"
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
-export function TrendRanking() {
+function formatAmount(amount: number): string {
+  if (amount >= 1_000_000_000_000) return `${(amount / 1_000_000_000_000).toFixed(1)}조`
+  if (amount >= 100_000_000) return `${(amount / 100_000_000).toFixed(0)}억`
+  if (amount >= 10_000) return `${(amount / 10_000).toFixed(0)}만`
+  return amount.toLocaleString("ko-KR")
+}
+
+function TrendTab() {
   const [days, setDays] = useState<Period>(5)
 
   const { data, isLoading } = useSWR<{ data: TrendEntry[] }>(
@@ -20,24 +29,21 @@ export function TrendRanking() {
   const entries = data?.data ?? []
 
   return (
-    <section>
-      <div className="flex items-center justify-between mb-2">
-        <h2 className="text-base font-bold">트렌드 랭킹</h2>
-        <div className="flex gap-1">
-          {PERIODS.map((p) => (
-            <button
-              key={p}
-              onClick={() => setDays(p)}
-              className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${
-                days === p
-                  ? "bg-foreground text-background"
-                  : "bg-muted text-muted-foreground hover:bg-muted/70"
-              }`}
-            >
-              {p}일
-            </button>
-          ))}
-        </div>
+    <>
+      <div className="flex gap-1 mb-2">
+        {PERIODS.map((p) => (
+          <button
+            key={p}
+            onClick={() => setDays(p)}
+            className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${
+              days === p
+                ? "bg-foreground text-background"
+                : "bg-muted text-muted-foreground hover:bg-muted/70"
+            }`}
+          >
+            {p}일
+          </button>
+        ))}
       </div>
 
       {isLoading && (
@@ -66,6 +72,94 @@ export function TrendRanking() {
           ))}
         </div>
       )}
+    </>
+  )
+}
+
+function VolumeTab() {
+  const { data, isLoading } = useSWR<{ data: VolumeRankEntry[] }>(
+    "/api/market/volume-rank",
+    fetcher,
+    { refreshInterval: 60_000 }
+  )
+
+  const entries = data?.data ?? []
+  const codes = entries.map((e) => e.stock_code)
+  const prices = useRealtimePrice(codes)
+
+  return (
+    <>
+      {isLoading && (
+        <div className="space-y-1.5">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="h-8 rounded bg-muted animate-pulse" />
+          ))}
+        </div>
+      )}
+
+      {!isLoading && entries.length === 0 && (
+        <p className="text-sm text-muted-foreground py-4 text-center">데이터 없음</p>
+      )}
+
+      {!isLoading && entries.length > 0 && (
+        <div className="divide-y divide-border rounded-lg border border-border overflow-hidden">
+          {entries.map((e) => {
+            const livePrice = prices.get(e.stock_code) ?? e.current_price
+            return (
+              <div key={e.stock_code} className="flex items-center gap-2 px-3 py-2 text-sm">
+                <span className="w-5 text-center text-xs text-muted-foreground font-medium shrink-0">
+                  {e.rank}
+                </span>
+                <span className="flex-1 font-medium truncate">{e.stock_name}</span>
+                <div className="text-right shrink-0">
+                  <div className="text-xs font-medium tabular-nums">
+                    {livePrice > 0 ? livePrice.toLocaleString("ko-KR") : "—"}
+                  </div>
+                  <div className="text-xs text-muted-foreground tabular-nums">
+                    {formatAmount(e.trading_amount)}
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </>
+  )
+}
+
+export function TrendRanking() {
+  const [tab, setTab] = useState<Tab>("trend")
+
+  return (
+    <section>
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="text-base font-bold">랭킹</h2>
+        <div className="flex gap-1">
+          <button
+            onClick={() => setTab("trend")}
+            className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${
+              tab === "trend"
+                ? "bg-foreground text-background"
+                : "bg-muted text-muted-foreground hover:bg-muted/70"
+            }`}
+          >
+            추천
+          </button>
+          <button
+            onClick={() => setTab("volume")}
+            className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${
+              tab === "volume"
+                ? "bg-foreground text-background"
+                : "bg-muted text-muted-foreground hover:bg-muted/70"
+            }`}
+          >
+            거래대금
+          </button>
+        </div>
+      </div>
+
+      {tab === "trend" ? <TrendTab /> : <VolumeTab />}
     </section>
   )
 }

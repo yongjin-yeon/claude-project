@@ -27,6 +27,14 @@ export interface TrendEntry {
   rank: number
 }
 
+export interface VolumeRankEntry {
+  rank: number
+  stock_code: string
+  stock_name: string
+  trading_amount: number
+  current_price: number
+}
+
 export interface HankyungReport {
   REPORT_IDX: number
   BUSINESS_CODE: string
