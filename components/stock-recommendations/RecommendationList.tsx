@@ -1,10 +1,12 @@
 "use client"
 
 import type { Recommendation } from "@/types/stock"
+import { calcUpside } from "@/lib/calcUpside"
 
 interface Props {
   recommendations: Recommendation[]
   isLoading: boolean
+  prices?: Map<string, number>
   onSelect?: (rec: Recommendation) => void
 }
 
@@ -27,7 +29,12 @@ function formatPrice(price: number): string {
   return price.toLocaleString("ko-KR")
 }
 
-export function RecommendationList({ recommendations, isLoading, onSelect }: Props) {
+function formatUpside(upside: number | null): string {
+  if (upside == null) return "—"
+  return `${upside >= 0 ? "+" : ""}${upside.toFixed(1)}%`
+}
+
+export function RecommendationList({ recommendations, isLoading, prices, onSelect }: Props) {
   return (
     <section>
       <h1 className="text-lg font-bold mb-1">오늘의 추천종목</h1>
@@ -87,10 +94,10 @@ export function RecommendationList({ recommendations, isLoading, onSelect }: Pro
                     </td>
                     <td className="px-3 py-2 text-right">{formatPrice(rec.target_price)}</td>
                     <td className="px-3 py-2 text-right text-muted-foreground" data-stock-code={rec.stock_code}>
-                      —
+                      {prices?.get(rec.stock_code)?.toLocaleString("ko-KR") ?? "—"}
                     </td>
                     <td className="px-3 py-2 text-right text-muted-foreground">
-                      —
+                      {formatUpside(calcUpside(rec.target_price, prices?.get(rec.stock_code) ?? null))}
                     </td>
                   </tr>
                 ))}
@@ -119,12 +126,14 @@ export function RecommendationList({ recommendations, isLoading, onSelect }: Pro
                       {rec.opinion}
                     </span>
                   </div>
-                  <span className="text-sm text-muted-foreground">—</span>
+                  <span className="text-sm text-muted-foreground">
+                    {formatUpside(calcUpside(rec.target_price, prices?.get(rec.stock_code) ?? null))}
+                  </span>
                 </div>
                 <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
                   <span>{rec.firm}</span>
                   <span>목표 {formatPrice(rec.target_price)}원</span>
-                  <span>현재 —</span>
+                  <span>현재 {prices?.get(rec.stock_code)?.toLocaleString("ko-KR") ?? "—"}</span>
                 </div>
               </div>
             ))}
