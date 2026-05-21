@@ -1,13 +1,13 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 
 export function useRealtimePrice(codes: string[]): Map<string, number> {
   const [prices, setPrices] = useState<Map<string, number>>(new Map())
-  const codesKey = codes.slice().sort().join(",")
+  const codesKey = useMemo(() => codes.slice().sort().join(","), [codes])
 
   useEffect(() => {
-    if (codes.length === 0) return
+    if (codesKey === "") return
 
     const url = `/api/price-stream?codes=${encodeURIComponent(codesKey)}`
     const es = new EventSource(url)
@@ -22,7 +22,6 @@ export function useRealtimePrice(codes: string[]): Map<string, number> {
     }
 
     return () => es.close()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [codesKey])
 
   return prices

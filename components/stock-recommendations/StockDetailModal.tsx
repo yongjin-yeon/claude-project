@@ -64,7 +64,10 @@ export function StockDetailModal({ selected, onClose }: Props) {
                 </span>
                 <span className="text-sm text-muted-foreground">
                   상승여력{" "}
-                  {calcUpside(consensus.avg_target_price, currentPrice)?.toFixed(1) ?? "—"}%
+                  {(() => {
+                    const u = calcUpside(consensus.avg_target_price, currentPrice)
+                    return u != null ? `${u >= 0 ? "+" : ""}${u.toFixed(1)}%` : "—"
+                  })()}
                 </span>
               </div>
             )}

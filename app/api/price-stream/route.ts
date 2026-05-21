@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
         const approvalKey = await getApprovalKey()
         const wsUrl = process.env.KIS_MOCK === "true"
           ? "wss://openapivts.koreainvestment.com:29443/websocket"
-          : "ws://ops.koreainvestment.com:21000"
+          : "wss://ops.koreainvestment.com:21000"
 
         ws = new WebSocket(wsUrl)
 
