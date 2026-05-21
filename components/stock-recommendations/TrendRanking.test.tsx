@@ -7,6 +7,7 @@ vi.mock("swr", () => ({ default: vi.fn() }))
 vi.mock("@/hooks/useRealtimePrice", () => ({
   useRealtimePrice: () => new Map<string, number>(),
 }))
+vi.mock("@/hooks/usePriceFlash", () => ({ usePriceFlash: () => null }))
 
 import useSWR from "swr"
 
@@ -17,8 +18,8 @@ const mockTrend: TrendEntry[] = [
 ]
 
 const mockVolume: VolumeRankEntry[] = [
-  { rank: 1, stock_code: "005930", stock_name: "삼성전자", trading_amount: 500_000_000_000, current_price: 78000 },
-  { rank: 2, stock_code: "000660", stock_name: "SK하이닉스", trading_amount: 300_000_000_000, current_price: 195000 },
+  { rank: 1, stock_code: "005930", stock_name: "삼성전자", trading_amount: 500_000_000_000, current_price: 78000, change_rate: 1.23 },
+  { rank: 2, stock_code: "000660", stock_name: "SK하이닉스", trading_amount: 300_000_000_000, current_price: 195000, change_rate: -0.55 },
 ]
 
 describe("TrendRanking", () => {
@@ -31,8 +32,8 @@ describe("TrendRanking", () => {
     render(<TrendRanking />)
     expect(screen.getByText("삼성전자")).toBeInTheDocument()
     expect(screen.getByText("SK하이닉스")).toBeInTheDocument()
-    expect(screen.getByText("12")).toBeInTheDocument()
-    expect(screen.getByText("8")).toBeInTheDocument()
+    expect(screen.getByText("12건")).toBeInTheDocument()
+    expect(screen.getByText("8건")).toBeInTheDocument()
   })
 
   it("shows rank numbers", () => {
@@ -95,9 +96,7 @@ describe("TrendRanking", () => {
     render(<TrendRanking />)
     fireEvent.click(screen.getByText("거래대금"))
 
-    // 500_000_000_000 = 5000억  (< 1조)
     expect(screen.getByText("5000억")).toBeInTheDocument()
-    // 300_000_000_000 = 3000억
     expect(screen.getByText("3000억")).toBeInTheDocument()
   })
 })

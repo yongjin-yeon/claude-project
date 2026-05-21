@@ -7,13 +7,14 @@ vi.mock("swr", () => ({ default: vi.fn() }))
 vi.mock("@/hooks/useRealtimePrice", () => ({
   useRealtimePrice: () => new Map<string, number>([["005930", 78500]]),
 }))
+vi.mock("@/hooks/usePriceFlash", () => ({ usePriceFlash: () => null }))
 
 import useSWR from "swr"
 
 const mockEntries: MarketCapEntry[] = [
-  { rank: 1, stock_code: "005930", stock_name: "삼성전자", market_cap: 4_680_000, current_price: 78000 },
-  { rank: 2, stock_code: "000660", stock_name: "SK하이닉스", market_cap: 1_420_000, current_price: 195000 },
-  { rank: 3, stock_code: "005380", stock_name: "현대차", market_cap: 530_000, current_price: 253000 },
+  { rank: 1, stock_code: "005930", stock_name: "삼성전자", market_cap: 4_680_000, current_price: 78000, change_rate: 1.23 },
+  { rank: 2, stock_code: "000660", stock_name: "SK하이닉스", market_cap: 1_420_000, current_price: 195000, change_rate: -0.55 },
+  { rank: 3, stock_code: "005380", stock_name: "현대차", market_cap: 530_000, current_price: 253000, change_rate: 0 },
 ]
 
 describe("MarketCapList", () => {
@@ -36,7 +37,6 @@ describe("MarketCapList", () => {
     } as ReturnType<typeof useSWR>)
 
     render(<MarketCapList />)
-    // 삼성전자 live price is 78,500 from mock
     expect(screen.getByText("78,500")).toBeInTheDocument()
   })
 
@@ -47,7 +47,6 @@ describe("MarketCapList", () => {
     } as ReturnType<typeof useSWR>)
 
     render(<MarketCapList />)
-    // SK하이닉스 has no live price → falls back to 195,000
     expect(screen.getByText("195,000")).toBeInTheDocument()
   })
 
@@ -58,10 +57,19 @@ describe("MarketCapList", () => {
     } as ReturnType<typeof useSWR>)
 
     render(<MarketCapList />)
-    // 4_680_000억 → "468.0조"
     expect(screen.getByText("468.0조")).toBeInTheDocument()
-    // 530_000억 → "53.0조"
     expect(screen.getByText("53.0조")).toBeInTheDocument()
+  })
+
+  it("shows change rate badges", () => {
+    vi.mocked(useSWR).mockReturnValue({
+      data: { data: mockEntries },
+      isLoading: false,
+    } as ReturnType<typeof useSWR>)
+
+    render(<MarketCapList />)
+    expect(screen.getByText("+1.23%")).toBeInTheDocument()
+    expect(screen.getByText("-0.55%")).toBeInTheDocument()
   })
 
   it("shows rank numbers", () => {
@@ -83,8 +91,7 @@ describe("MarketCapList", () => {
     } as ReturnType<typeof useSWR>)
 
     const { container } = render(<MarketCapList />)
-    const skeletons = container.querySelectorAll(".animate-pulse")
-    expect(skeletons.length).toBeGreaterThan(0)
+    expect(container.querySelectorAll(".animate-pulse").length).toBeGreaterThan(0)
   })
 
   it("shows 데이터 없음 when empty", () => {

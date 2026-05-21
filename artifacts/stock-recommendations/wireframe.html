@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wireframe: stock-recommendations</title>
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  :root {
+    --w-bg: #f5f5f5;
+    --w-border: #ccc;
+    --w-text: #555;
+    --w-muted: #aaa;
+    --w-fill: #eee;
+  }
+
+  * {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    color: var(--w-text);
+  }
+
+  body { background: var(--w-bg); }
+
+  nav { position: sticky; top: 0; z-index: 40; background: var(--w-bg); border-bottom: 1px solid var(--w-border); }
+  nav button { cursor: pointer; font-size: 13px; }
+  nav button:hover { background: var(--w-fill); border-radius: 4px; }
+  nav button.active { font-weight: bold; border-bottom: 2px solid var(--w-text); }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  .vp-toggle button {
+    font-size: 12px; padding: 2px 8px;
+    border: 1px solid var(--w-border); cursor: pointer; background: white;
+  }
+  .vp-toggle button:first-child { border-radius: 4px 0 0 4px; }
+  .vp-toggle button:last-child { border-radius: 0 4px 4px 0; border-left: none; }
+  .vp-toggle button.active { background: var(--w-text); color: white; }
+
+  body.viewport-mobile .screen-content {
+    max-width: 375px !important;
+    margin: 24px auto !important;
+    border: 2px solid var(--w-border);
+    border-radius: 24px;
+    min-height: 667px;
+    background: white;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    padding: 24px 16px !important;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .screen-notes {
+    background: #fffde7;
+    border-left: 3px solid #ffd54f;
+    padding: 12px 16px;
+    margin-top: 24px;
+    font-size: 13px;
+    border-radius: 0 4px 4px 0;
+  }
+  .screen-notes summary { cursor: pointer; font-weight: bold; font-size: 12px; color: #b0a050; text-transform: uppercase; letter-spacing: 0.05em; }
+  .screen-notes p { margin: 6px 0 2px; color: #777; }
+  .screen-notes ul { margin: 4px 0 0 16px; padding: 0; color: #777; }
+  .screen-notes li { margin: 2px 0; }
+
+  /* Wireframe-specific */
+  .w-badge {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+    border: 1px solid var(--w-border);
+    background: var(--w-fill);
+  }
+  .w-badge-strong {
+    border-color: var(--w-text);
+    background: var(--w-text);
+    color: white !important;
+  }
+  .w-up { color: #333 !important; font-weight: bold; }
+  .w-chip {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    border: 1px solid var(--w-border);
+    cursor: pointer;
+    background: white;
+  }
+  .w-chip.active {
+    background: var(--w-text);
+    color: white !important;
+    border-color: var(--w-text);
+  }
+  .w-chip * { color: inherit !important; }
+  .w-bar {
+    height: 8px;
+    border-radius: 2px;
+    background: var(--w-fill);
+    border: 1px solid var(--w-border);
+  }
+  .w-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: var(--w-text);
+  }
+  .w-chart-placeholder {
+    border: 1px dashed var(--w-border);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--w-fill);
+  }
+  .w-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.35);
+    z-index: 10;
+    border-radius: 22px;
+  }
+  .w-modal {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    border-radius: 16px 16px 0 0;
+    z-index: 20;
+    padding: 20px 16px;
+    max-height: 85%;
+    overflow-y: auto;
+  }
+  .w-modal-desktop {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    border-radius: 8px;
+    z-index: 50;
+    width: 560px;
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: 24px;
+    border: 1px solid var(--w-border);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.15);
+  }
+  .w-divider { border: none; border-top: 1px solid var(--w-border); margin: 12px 0; }
+  .w-table th { font-size: 11px; color: var(--w-muted); text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--w-border); }
+  .w-table td { font-size: 12px; padding: 6px 8px; border-bottom: 1px solid var(--w-fill); }
+  .w-row-hover:hover { background: var(--w-fill); cursor: pointer; }
+  .w-skeleton { background: var(--w-fill); border-radius: 3px; animation: pulse 1.5s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+</style>
+</head>
+<body class="p-0 m-0 viewport-mobile">
+
+<nav class="flex items-center gap-4 px-6 py-2">
+  <span class="text-xs" style="color:var(--w-muted)">wireframe</span>
+  <button id="nav-0" onclick="show(0)" class="px-2 py-1">홈 — 목록</button>
+  <button id="nav-1" onclick="show(1)" class="px-2 py-1">상세 모달</button>
+  <button id="nav-2" onclick="show(2)" class="px-2 py-1">로딩 / 빈 상태</button>
+  <div class="vp-toggle flex ml-auto">
+    <button id="vp-desktop" onclick="setViewport('desktop')">Desktop</button>
+    <button id="vp-mobile" onclick="setViewport('mobile')" class="active">Mobile</button>
+  </div>
+</nav>
+
+<!-- ────────────── SCREEN 0: 홈 — 목록 + 랭킹 ────────────── -->
+<div id="screen-0" class="screen" data-scenario="scenario-1, scenario-2, scenario-4, scenario-5">
+  <div class="screen-content @container max-w-6xl mx-auto p-6">
+
+    <!-- 헤더 -->
+    <div class="flex items-center justify-between mb-5">
+      <div>
+        <h1 class="text-base font-bold" style="color:var(--w-text)">오늘의 전문가 추천종목</h1>
+        <p class="text-xs mt-0.5" style="color:var(--w-muted)">마지막 갱신: 2025-05-21 09:32</p>
+      </div>
+      <button class="w-chip flex items-center gap-1">
+        <i data-lucide="refresh-cw" style="width:12px;height:12px"></i>
+        새로고침
+      </button>
+    </div>
+
+    <!-- 레이아웃: 모바일 1컬럼 / 데스크톱 좌측 목록 + 우측 랭킹 -->
+    <div class="@md:flex @md:gap-6">
+
+      <!-- 좌측: 추천종목 목록 -->
+      <div class="@md:flex-1 min-w-0">
+        <div class="text-xs font-bold mb-2" style="color:var(--w-muted); letter-spacing:0.05em">추천종목 목록 — 12건</div>
+
+        <!-- 테이블 (데스크톱) -->
+        <div class="hidden @md:block border rounded" style="border-color:var(--w-border); background:white; overflow:hidden;">
+          <table class="w-table w-full">
+            <thead>
+              <tr style="background:var(--w-fill)">
+                <th>종목명</th>
+                <th>증권사</th>
+                <th>투자의견</th>
+                <th style="text-align:right">목표가</th>
+                <th style="text-align:right">현재가 ⚡</th>
+                <th style="text-align:right">상승여력 ⚡</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="w-row-hover">
+                <td><span class="font-bold" style="font-size:13px">삼성전자</span><br><span style="color:var(--w-muted);font-size:10px">005930</span></td>
+                <td style="font-size:11px">미래에셋</td>
+                <td><span class="w-badge w-badge-strong">매수</span></td>
+                <td style="text-align:right">98,000</td>
+                <td style="text-align:right">82,400</td>
+                <td style="text-align:right" class="w-up">+18.9%</td>
+              </tr>
+              <tr class="w-row-hover">
+                <td><span class="font-bold" style="font-size:13px">SK하이닉스</span><br><span style="color:var(--w-muted);font-size:10px">000660</span></td>
+                <td style="font-size:11px">한국투자</td>
+                <td><span class="w-badge w-badge-strong">매수</span></td>
+                <td style="text-align:right">220,000</td>
+                <td style="text-align:right">183,200</td>
+                <td style="text-align:right" class="w-up">+20.1%</td>
+              </tr>
+              <tr class="w-row-hover">
+                <td><span class="font-bold" style="font-size:13px">NAVER</span><br><span style="color:var(--w-muted);font-size:10px">035420</span></td>
+                <td style="font-size:11px">KB증권</td>
+                <td><span class="w-badge">중립</span></td>
+                <td style="text-align:right">230,000</td>
+                <td style="text-align:right">222,500</td>
+                <td style="text-align:right">+3.4%</td>
+              </tr>
+              <tr class="w-row-hover">
+                <td><span class="font-bold" style="font-size:13px">LG에너지솔루션</span><br><span style="color:var(--w-muted);font-size:10px">373220</span></td>
+                <td style="font-size:11px">신한투자</td>
+                <td><span class="w-badge w-badge-strong">매수</span></td>
+                <td style="text-align:right">580,000</td>
+                <td style="text-align:right">415,000</td>
+                <td style="text-align:right" class="w-up">+39.8%</td>
+              </tr>
+              <tr class="w-row-hover">
+                <td><span class="font-bold" style="font-size:13px">현대차</span><br><span style="color:var(--w-muted);font-size:10px">005380</span></td>
+                <td style="font-size:11px">삼성증권</td>
+                <td><span class="w-badge w-badge-strong">매수</span></td>
+                <td style="text-align:right">310,000</td>
+                <td style="text-align:right">271,000</td>
+                <td style="text-align:right" class="w-up">+14.4%</td>
+              </tr>
+              <tr>
+                <td colspan="6" class="text-center" style="font-size:11px;color:var(--w-muted);padding:8px">
+                  + 7건 더 보기
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 카드 리스트 (모바일) -->
+        <div class="@md:hidden flex flex-col gap-2">
+          <!-- 카드 1 -->
+          <div class="w-row-hover rounded border p-3" style="border-color:var(--w-border);background:white;">
+            <div class="flex items-start justify-between">
+              <div>
+                <span class="font-bold" style="font-size:13px">삼성전자</span>
+                <span class="ml-1 w-badge w-badge-strong">매수</span>
+              </div>
+              <span class="w-up text-sm">+18.9%</span>
+            </div>
+            <div class="flex items-center gap-3 mt-1.5" style="font-size:11px;color:var(--w-muted)">
+              <span>미래에셋</span>
+              <span>목표 98,000원</span>
+              <span>현재 82,400원 ⚡</span>
+            </div>
+          </div>
+          <!-- 카드 2 -->
+          <div class="w-row-hover rounded border p-3" style="border-color:var(--w-border);background:white;">
+            <div class="flex items-start justify-between">
+              <div>
+                <span class="font-bold" style="font-size:13px">SK하이닉스</span>
+                <span class="ml-1 w-badge w-badge-strong">매수</span>
+              </div>
+              <span class="w-up text-sm">+20.1%</span>
+            </div>
+            <div class="flex items-center gap-3 mt-1.5" style="font-size:11px;color:var(--w-muted)">
+              <span>한국투자</span>
+              <span>목표 220,000원</span>
+              <span>현재 183,200원 ⚡</span>
+            </div>
+          </div>
+          <!-- 카드 3 -->
+          <div class="w-row-hover rounded border p-3" style="border-color:var(--w-border);background:white;">
+            <div class="flex items-start justify-between">
+              <div>
+                <span class="font-bold" style="font-size:13px">LG에너지솔루션</span>
+                <span class="ml-1 w-badge w-badge-strong">매수</span>
+              </div>
+              <span class="w-up text-sm">+39.8%</span>
+            </div>
+            <div class="flex items-center gap-3 mt-1.5" style="font-size:11px;color:var(--w-muted)">
+              <span>신한투자</span>
+              <span>목표 580,000원</span>
+              <span>현재 415,000원 ⚡</span>
+            </div>
+          </div>
+          <button class="w-chip text-center mt-1" style="width:100%;padding:8px">+ 9건 더 보기</button>
+        </div>
+      </div>
+
+      <!-- 우측: 트렌드 랭킹 -->
+      <div class="@md:w-64 mt-6 @md:mt-0">
+        <div class="flex items-center justify-between mb-2">
+          <div class="text-xs font-bold" style="color:var(--w-muted); letter-spacing:0.05em">트렌드 랭킹</div>
+          <div class="flex gap-1">
+            <span class="w-chip active">5일</span>
+            <span class="w-chip">20일</span>
+            <span class="w-chip">60일</span>
+          </div>
+        </div>
+
+        <div class="rounded border" style="border-color:var(--w-border);background:white;overflow:hidden;">
+          <table class="w-full" style="border-collapse:collapse">
+            <thead>
+              <tr style="background:var(--w-fill)">
+                <th class="w-table" style="width:28px">순위</th>
+                <th class="w-table">종목명</th>
+                <th class="w-table" style="text-align:right">추천수</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="w-row-hover">
+                <td class="w-table" style="text-align:center;font-size:12px;font-weight:bold">1</td>
+                <td class="w-table" style="font-size:12px">삼성전자</td>
+                <td class="w-table" style="text-align:right;font-size:12px">14건</td>
+              </tr>
+              <tr class="w-row-hover">
+                <td class="w-table" style="text-align:center;font-size:12px;font-weight:bold">2</td>
+                <td class="w-table" style="font-size:12px">SK하이닉스</td>
+                <td class="w-table" style="text-align:right;font-size:12px">11건</td>
+              </tr>
+              <tr class="w-row-hover">
+                <td class="w-table" style="text-align:center;font-size:12px;font-weight:bold">3</td>
+                <td class="w-table" style="font-size:12px">LG에너지솔루션</td>
+                <td class="w-table" style="text-align:right;font-size:12px">9건</td>
+              </tr>
+              <tr class="w-row-hover">
+                <td class="w-table" style="text-align:center;font-size:12px;font-weight:bold">4</td>
+                <td class="w-table" style="font-size:12px">현대차</td>
+                <td class="w-table" style="text-align:right;font-size:12px">8건</td>
+              </tr>
+              <tr class="w-row-hover">
+                <td class="w-table" style="text-align:center;font-size:12px;font-weight:bold">5</td>
+                <td class="w-table" style="font-size:12px">NAVER</td>
+                <td class="w-table" style="text-align:right;font-size:12px">7건</td>
+              </tr>
+              <tr class="w-row-hover">
+                <td class="w-table" style="text-align:center;font-size:12px">6</td>
+                <td class="w-table" style="font-size:12px">카카오뱅크</td>
+                <td class="w-table" style="text-align:right;font-size:12px">6건</td>
+              </tr>
+              <tr class="w-row-hover">
+                <td class="w-table" style="text-align:center;font-size:12px">7</td>
+                <td class="w-table" style="font-size:12px">포스코홀딩스</td>
+                <td class="w-table" style="text-align:right;font-size:12px">5건</td>
+              </tr>
+              <tr class="w-row-hover">
+                <td class="w-table" style="text-align:center;font-size:12px">8</td>
+                <td class="w-table" style="font-size:12px">셀트리온</td>
+                <td class="w-table" style="text-align:right;font-size:12px">5건</td>
+              </tr>
+              <tr class="w-row-hover">
+                <td class="w-table" style="text-align:center;font-size:12px">9</td>
+                <td class="w-table" style="font-size:12px">기아</td>
+                <td class="w-table" style="text-align:right;font-size:12px">4건</td>
+              </tr>
+              <tr class="w-row-hover">
+                <td class="w-table" style="text-align:center;font-size:12px">10</td>
+                <td class="w-table" style="font-size:12px">한화에어로스페이스</td>
+                <td class="w-table" style="text-align:right;font-size:12px">4건</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="text-xs mt-1.5" style="color:var(--w-muted)">⚡ 표시 = 실시간 갱신</p>
+      </div>
+
+    </div><!-- end layout -->
+
+    <div class="screen-notes">
+      <details open>
+        <summary>Notes</summary>
+        <p>트리거: 서비스 홈페이지(/) 진입 시</p>
+        <ul>
+          <li>인터랙션: 종목 행/카드 클릭 → 상세 모달 열기 (screen-1)</li>
+          <li>인터랙션: 트렌드 랭킹 기간 칩 클릭 → 해당 기간 랭킹으로 즉시 변경</li>
+          <li>인터랙션: 트렌드 랭킹 종목 클릭 → 상세 모달 열기</li>
+          <li>인터랙션: 새로고침 버튼 클릭 → 추천종목 재스크래핑 요청</li>
+          <li>⚡ 현재가·상승여력은 실시간 시세 스트림으로 갱신</li>
+          <li>데이터 없음 / 로딩 상태 → screen-2</li>
+        </ul>
+      </details>
+    </div>
+
+  </div>
+</div>
+
+<!-- ────────────── SCREEN 1: 상세 모달 ────────────── -->
+<div id="screen-1" class="screen" data-scenario="scenario-3">
+  <div class="screen-content @container max-w-6xl mx-auto p-6" style="position:relative;min-height:600px;">
+
+    <!-- 배경 (흐리게 처리된 홈 화면 축약) -->
+    <div style="opacity:0.3; pointer-events:none; padding-bottom: 200px;">
+      <div class="flex items-center justify-between mb-4">
+        <h1 class="text-base font-bold">오늘의 전문가 추천종목</h1>
+        <span class="text-xs" style="color:var(--w-muted)">마지막 갱신: 2025-05-21 09:32</span>
+      </div>
+      <div class="rounded border p-3 mb-2" style="border-color:var(--w-border);background:white;font-size:12px">삼성전자 | 미래에셋 | 매수 | 98,000원 | 82,400원 | +18.9%</div>
+      <div class="rounded border p-3 mb-2" style="border-color:var(--w-border);background:white;font-size:12px">SK하이닉스 | 한국투자 | 매수 | 220,000원 | 183,200원 | +20.1%</div>
+    </div>
+
+    <!-- 오버레이 -->
+    <div class="w-overlay"></div>
+
+    <!-- 모달 (모바일: bottom sheet / 데스크톱: center modal) -->
+    <div class="w-modal @md:w-modal-desktop">
+
+      <!-- 모달 헤더 -->
+      <div class="flex items-start justify-between mb-3">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-bold" style="font-size:15px">삼성전자</span>
+            <span style="font-size:11px;color:var(--w-muted)">005930 · KOSPI</span>
+          </div>
+          <div class="flex items-center gap-3 mt-1" style="font-size:12px">
+            <span class="font-bold">82,400원 ⚡</span>
+            <span class="w-up">+18.9% 상승여력 ⚡</span>
+          </div>
+        </div>
+        <button style="background:none;border:none;cursor:pointer;color:var(--w-muted)">
+          <i data-lucide="x" style="width:18px;height:18px"></i>
+        </button>
+      </div>
+
+      <hr class="w-divider">
+
+      <!-- 컨센서스 요약 -->
+      <div class="mb-4">
+        <div class="text-xs font-bold mb-2" style="color:var(--w-muted);letter-spacing:0.05em">컨센서스 요약</div>
+        <div class="flex items-center gap-4 mb-3">
+          <div class="text-center">
+            <div class="font-bold" style="font-size:18px">98,500원</div>
+            <div style="font-size:10px;color:var(--w-muted)">평균 목표가</div>
+          </div>
+          <div class="flex-1">
+            <div class="flex items-center gap-1 mb-1" style="font-size:11px">
+              <span style="width:36px">매수</span>
+              <div class="w-bar flex-1"><div class="w-bar-fill" style="width:75%"></div></div>
+              <span style="width:20px;text-align:right">9</span>
+            </div>
+            <div class="flex items-center gap-1 mb-1" style="font-size:11px">
+              <span style="width:36px">중립</span>
+              <div class="w-bar flex-1"><div class="w-bar-fill" style="width:17%;background:var(--w-muted)"></div></div>
+              <span style="width:20px;text-align:right">2</span>
+            </div>
+            <div class="flex items-center gap-1" style="font-size:11px">
+              <span style="width:36px">매도</span>
+              <div class="w-bar flex-1"><div class="w-bar-fill" style="width:8%;background:var(--w-muted)"></div></div>
+              <span style="width:20px;text-align:right">1</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <hr class="w-divider">
+
+      <!-- 목표가 히스토리 차트 -->
+      <div class="mb-4">
+        <div class="text-xs font-bold mb-2" style="color:var(--w-muted);letter-spacing:0.05em">목표가 히스토리</div>
+        <div class="w-chart-placeholder" style="height:100px">
+          <span style="font-size:11px;color:var(--w-muted)">[ 목표가 추이 차트 — 날짜 × 목표가 ]</span>
+        </div>
+      </div>
+
+      <hr class="w-divider">
+
+      <!-- 증권사별 리스트 -->
+      <div>
+        <div class="text-xs font-bold mb-2" style="color:var(--w-muted);letter-spacing:0.05em">증권사별 리포트</div>
+        <table class="w-table w-full">
+          <thead>
+            <tr style="background:var(--w-fill)">
+              <th>증권사</th>
+              <th>날짜</th>
+              <th>투자의견</th>
+              <th style="text-align:right">목표가</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td class="w-table" style="font-size:12px">미래에셋</td><td class="w-table" style="font-size:12px">2025.05.21</td><td class="w-table"><span class="w-badge w-badge-strong">매수</span></td><td class="w-table" style="text-align:right;font-size:12px">98,000</td></tr>
+            <tr><td class="w-table" style="font-size:12px">한국투자</td><td class="w-table" style="font-size:12px">2025.05.20</td><td class="w-table"><span class="w-badge w-badge-strong">매수</span></td><td class="w-table" style="text-align:right;font-size:12px">102,000</td></tr>
+            <tr><td class="w-table" style="font-size:12px">KB증권</td><td class="w-table" style="font-size:12px">2025.05.19</td><td class="w-table"><span class="w-badge w-badge-strong">매수</span></td><td class="w-table" style="text-align:right;font-size:12px">100,000</td></tr>
+            <tr><td class="w-table" style="font-size:12px">신한투자</td><td class="w-table" style="font-size:12px">2025.05.18</td><td class="w-table"><span class="w-badge">중립</span></td><td class="w-table" style="text-align:right;font-size:12px">88,000</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="screen-notes" style="position:relative;z-index:60;margin-top:24px">
+      <details open>
+        <summary>Notes</summary>
+        <p>트리거: 홈 화면에서 종목 행/카드 클릭 시</p>
+        <ul>
+          <li>모바일: bottom sheet 스타일 (아래에서 올라오는 패널)</li>
+          <li>데스크톱: 중앙 모달</li>
+          <li>인터랙션: X 버튼 또는 오버레이 클릭 → 모달 닫기, 홈으로 복귀</li>
+          <li>⚡ 모달 내 현재가·상승여력도 실시간 갱신</li>
+        </ul>
+      </details>
+    </div>
+
+  </div>
+</div>
+
+<!-- ────────────── SCREEN 2: 로딩 / 빈 상태 ────────────── -->
+<div id="screen-2" class="screen" data-scenario="scenario-6">
+  <div class="screen-content @container max-w-6xl mx-auto p-6">
+
+    <!-- 헤더 -->
+    <div class="flex items-center justify-between mb-5">
+      <div>
+        <h1 class="text-base font-bold">오늘의 전문가 추천종목</h1>
+        <p class="text-xs mt-0.5" style="color:var(--w-muted)">데이터를 불러오는 중...</p>
+      </div>
+    </div>
+
+    <!-- 로딩 상태 -->
+    <div class="mb-6">
+      <div class="text-xs font-bold mb-2" style="color:var(--w-muted);letter-spacing:0.05em">로딩 상태</div>
+      <div class="flex flex-col gap-2">
+        <div class="rounded border p-3" style="border-color:var(--w-border);background:white;">
+          <div class="flex items-center justify-between mb-2">
+            <div class="w-skeleton" style="width:100px;height:14px"></div>
+            <div class="w-skeleton" style="width:40px;height:14px"></div>
+          </div>
+          <div class="w-skeleton" style="width:200px;height:10px"></div>
+        </div>
+        <div class="rounded border p-3" style="border-color:var(--w-border);background:white;">
+          <div class="flex items-center justify-between mb-2">
+            <div class="w-skeleton" style="width:120px;height:14px"></div>
+            <div class="w-skeleton" style="width:40px;height:14px"></div>
+          </div>
+          <div class="w-skeleton" style="width:180px;height:10px"></div>
+        </div>
+        <div class="rounded border p-3" style="border-color:var(--w-border);background:white;">
+          <div class="flex items-center justify-between mb-2">
+            <div class="w-skeleton" style="width:80px;height:14px"></div>
+            <div class="w-skeleton" style="width:40px;height:14px"></div>
+          </div>
+          <div class="w-skeleton" style="width:220px;height:10px"></div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="w-divider">
+
+    <!-- 빈 상태 -->
+    <div class="mt-6">
+      <div class="text-xs font-bold mb-2" style="color:var(--w-muted);letter-spacing:0.05em">데이터 없음 상태</div>
+      <div class="rounded border p-8 text-center" style="border-color:var(--w-border);background:white;">
+        <i data-lucide="inbox" style="width:32px;height:32px;color:var(--w-muted);margin:0 auto 12px;display:block"></i>
+        <p class="font-bold mb-1" style="font-size:13px">오늘의 추천종목이 아직 없습니다</p>
+        <p style="font-size:11px;color:var(--w-muted)">장 시작 후 데이터가 자동으로 갱신됩니다</p>
+        <button class="w-chip mt-4 flex items-center gap-1 mx-auto">
+          <i data-lucide="refresh-cw" style="width:12px;height:12px"></i>
+          새로고침
+        </button>
+      </div>
+    </div>
+
+    <div class="screen-notes">
+      <details open>
+        <summary>Notes</summary>
+        <p>트리거: 데이터 스크래핑 중이거나 아직 0건인 경우</p>
+        <ul>
+          <li>로딩 상태: 스켈레톤 카드 3개 표시 — 실제 카드와 동일한 구조</li>
+          <li>데이터 없음: 빈 화면 대신 인박스 아이콘 + 안내 문구 + 새로고침 버튼</li>
+          <li>두 상태는 시각적으로 구분됨 (스켈레톤 애니메이션 vs 정적 메시지)</li>
+        </ul>
+      </details>
+    </div>
+
+  </div>
+</div>
+
+<script>
+var currentScreen = 0;
+var screenIds = [];
+
+function show(id) {
+  document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+  document.getElementById('screen-' + id).classList.add('active');
+  document.querySelectorAll('nav button[id^="nav-"]').forEach(function(b) { b.classList.remove('active'); });
+  document.getElementById('nav-' + id).classList.add('active');
+  currentScreen = screenIds.indexOf(id);
+}
+
+function setViewport(mode) {
+  document.body.classList.remove('viewport-mobile', 'viewport-desktop');
+  document.body.classList.add('viewport-' + mode);
+  document.querySelectorAll('.vp-toggle button').forEach(function(b) { b.classList.remove('active'); });
+  document.getElementById('vp-' + mode).classList.add('active');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('nav button[id^="nav-"]').forEach(function(b) {
+    screenIds.push(parseInt(b.id.replace('nav-', '')));
+  });
+  var first = document.querySelector('nav button[id^="nav-"]');
+  if (first) first.click();
+  lucide.createIcons();
+});
+</script>
+</body>
+</html>

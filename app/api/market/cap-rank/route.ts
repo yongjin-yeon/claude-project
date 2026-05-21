@@ -8,6 +8,7 @@ interface KisCapItem {
   hts_kor_isnm: string
   stck_avls: string   // 시가총액 (억원)
   stck_prpr: string   // 주식 현재가
+  prdy_ctrt: string   // 전일 대비 등락률 (%)
 }
 
 export async function GET() {
@@ -59,6 +60,7 @@ export async function GET() {
         stock_name: item.hts_kor_isnm,
         market_cap: parseInt(item.stck_avls, 10) || 0,
         current_price: parseInt(item.stck_prpr, 10) || 0,
+        change_rate: parseFloat(item.prdy_ctrt) || 0,
       }))
 
     return NextResponse.json({ data: entries })

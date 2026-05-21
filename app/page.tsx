@@ -13,6 +13,21 @@ type MainTab = "recommendations" | "marketcap"
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
+function TabButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+        active
+          ? "border-foreground text-foreground"
+          : "border-transparent text-muted-foreground hover:text-foreground"
+      }`}
+    >
+      {children}
+    </button>
+  )
+}
+
 export default function Page() {
   const [mainTab, setMainTab] = useState<MainTab>("recommendations")
   const [selected, setSelected] = useState<Recommendation | null>(null)
@@ -27,33 +42,23 @@ export default function Page() {
   const prices = useRealtimePrice(codes)
 
   return (
-    <main className="min-h-screen p-4 md:p-8 max-w-5xl mx-auto">
-      <div className="flex flex-col md:flex-row gap-6">
-        <div className="flex-1 min-w-0">
-          {/* Main tab bar */}
-          <div className="flex gap-1 mb-3">
-            <button
-              onClick={() => setMainTab("recommendations")}
-              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                mainTab === "recommendations"
-                  ? "bg-foreground text-background"
-                  : "bg-muted text-muted-foreground hover:bg-muted/70"
-              }`}
-            >
-              추천종목
-            </button>
-            <button
-              onClick={() => setMainTab("marketcap")}
-              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                mainTab === "marketcap"
-                  ? "bg-foreground text-background"
-                  : "bg-muted text-muted-foreground hover:bg-muted/70"
-              }`}
-            >
-              시총 Top30
-            </button>
-          </div>
+    <main className="min-h-screen bg-background">
+      {/* Top header */}
+      <header className="border-b border-border px-4 md:px-8 max-w-6xl mx-auto">
+        <div className="flex items-center gap-1">
+          <TabButton active={mainTab === "recommendations"} onClick={() => setMainTab("recommendations")}>
+            오늘의 추천종목
+          </TabButton>
+          <TabButton active={mainTab === "marketcap"} onClick={() => setMainTab("marketcap")}>
+            시총 Top30
+          </TabButton>
+        </div>
+      </header>
 
+      {/* Body */}
+      <div className="px-4 md:px-8 py-4 max-w-6xl mx-auto flex flex-col md:flex-row gap-5">
+        {/* Main content */}
+        <div className="flex-1 min-w-0">
           {mainTab === "recommendations" ? (
             <RecommendationList
               recommendations={data?.data ?? []}
@@ -66,7 +71,8 @@ export default function Page() {
           )}
         </div>
 
-        <div className="w-full md:w-64 shrink-0">
+        {/* Sidebar */}
+        <div className="w-full md:w-56 shrink-0">
           <TrendRanking />
         </div>
       </div>

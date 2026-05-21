@@ -31,8 +31,9 @@ export interface MarketCapEntry {
   rank: number
   stock_code: string
   stock_name: string
-  market_cap: number  // 억원
+  market_cap: number    // 억원
   current_price: number
+  change_rate: number   // 전일 대비 등락률 (%)
 }
 
 export interface VolumeRankEntry {
@@ -41,6 +42,7 @@ export interface VolumeRankEntry {
   stock_name: string
   trading_amount: number
   current_price: number
+  change_rate: number   // 전일 대비 등락률 (%)
 }
 
 export interface HankyungReport {

@@ -3,6 +3,8 @@ import { render, screen } from "@testing-library/react"
 import { RecommendationList } from "./RecommendationList"
 import type { Recommendation } from "@/types/stock"
 
+vi.mock("@/hooks/usePriceFlash", () => ({ usePriceFlash: () => null }))
+
 const mockRecs: Recommendation[] = [
   {
     id: 1,
@@ -27,40 +29,35 @@ const mockRecs: Recommendation[] = [
 ]
 
 describe("RecommendationList", () => {
-  it("shows heading '오늘의 추천종목'", () => {
+  it("renders stock names, firms, and target prices when data is present", () => {
     render(<RecommendationList recommendations={mockRecs} isLoading={false} />)
-    expect(screen.getByText("오늘의 추천종목")).toBeInTheDocument()
-  })
-
-  it("renders at least one row when data is present", () => {
-    render(<RecommendationList recommendations={mockRecs} isLoading={false} />)
-    // jsdom renders both desktop table and mobile cards simultaneously (no CSS media queries)
     expect(screen.getAllByText("삼성전자").length).toBeGreaterThan(0)
     expect(screen.getAllByText("미래에셋").length).toBeGreaterThan(0)
     expect(screen.getAllByText("매수").length).toBeGreaterThan(0)
     expect(screen.getAllByText("98,000").length).toBeGreaterThan(0)
   })
 
-  it("shows skeleton cards while loading", () => {
+  it("shows skeleton rows while loading", () => {
     render(<RecommendationList recommendations={[]} isLoading={true} />)
     const skeletons = document.querySelectorAll("[data-testid='skeleton-card']")
     expect(skeletons.length).toBeGreaterThan(0)
-    expect(screen.queryByText("오늘의 추천종목이 아직 없습니다")).not.toBeInTheDocument()
+    expect(screen.queryByText("추천종목이 없습니다")).not.toBeInTheDocument()
   })
 
   it("shows empty state message when no data and not loading", () => {
     render(<RecommendationList recommendations={[]} isLoading={false} />)
-    expect(screen.getByText("오늘의 추천종목이 아직 없습니다")).toBeInTheDocument()
+    expect(screen.getByText("추천종목이 없습니다")).toBeInTheDocument()
   })
 
-  it("skeleton and empty state are visually distinct", () => {
-    const { rerender } = render(
-      <RecommendationList recommendations={[]} isLoading={true} />
-    )
-    expect(document.querySelectorAll("[data-testid='skeleton-card']").length).toBeGreaterThan(0)
+  it("shows upside badge with + for positive upside", () => {
+    const prices = new Map([["005930", 80000]])  // target 98000, upside ~+22.5%
+    render(<RecommendationList recommendations={mockRecs} isLoading={false} prices={prices} />)
+    expect(screen.getAllByText(/\+\d+\.\d+%/).length).toBeGreaterThan(0)
+  })
 
-    rerender(<RecommendationList recommendations={[]} isLoading={false} />)
-    expect(document.querySelectorAll("[data-testid='skeleton-card']").length).toBe(0)
-    expect(screen.getByText("오늘의 추천종목이 아직 없습니다")).toBeInTheDocument()
+  it("shows sequential rank numbers", () => {
+    render(<RecommendationList recommendations={mockRecs} isLoading={false} />)
+    expect(screen.getByText("1")).toBeInTheDocument()
+    expect(screen.getByText("2")).toBeInTheDocument()
   })
 })
