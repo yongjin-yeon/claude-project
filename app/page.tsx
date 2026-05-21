@@ -1,7 +1,9 @@
 "use client"
 
+import { useState } from "react"
 import useSWR from "swr"
 import { RecommendationList } from "@/components/stock-recommendations/RecommendationList"
+import { StockDetailModal } from "@/components/stock-recommendations/StockDetailModal"
 import { useRealtimePrice } from "@/hooks/useRealtimePrice"
 import type { Recommendation } from "@/types/stock"
 
@@ -16,6 +18,7 @@ export default function Page() {
 
   const codes = (data?.data ?? []).map((r) => r.stock_code)
   const prices = useRealtimePrice(codes)
+  const [selected, setSelected] = useState<Recommendation | null>(null)
 
   return (
     <main className="min-h-screen p-4 md:p-8 max-w-5xl mx-auto">
@@ -23,7 +26,9 @@ export default function Page() {
         recommendations={data?.data ?? []}
         isLoading={isLoading}
         prices={prices}
+        onSelect={setSelected}
       />
+      <StockDetailModal selected={selected} onClose={() => setSelected(null)} />
     </main>
   )
 }
