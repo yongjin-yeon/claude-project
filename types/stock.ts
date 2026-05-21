@@ -27,6 +27,14 @@ export interface TrendEntry {
   rank: number
 }
 
+export interface MarketCapEntry {
+  rank: number
+  stock_code: string
+  stock_name: string
+  market_cap: number  // 억원
+  current_price: number
+}
+
 export interface VolumeRankEntry {
   rank: number
   stock_code: string
